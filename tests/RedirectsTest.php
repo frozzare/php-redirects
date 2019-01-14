@@ -184,13 +184,24 @@ class RedirectsTest extends TestCase
                 'language' => [
                     'zh',
                 ],
-            ])
+            ]),
+            new Rule([
+                'from' => '/news/:year/:month/:date/:slug',
+                'to' => '/blog/:year/:month/:date/:slug',
+            ]),
+            new Rule([
+                'from' => '/',
+                'to' => '/hello',
+                'role' => [
+                    'editor',
+                ],
+            ]),
         ];
 
         foreach ($expected as $index => $expectedRule) {
             $rule = $rules[$index];
 
-            foreach ($expectedRule as $key => $value) {
+            foreach ($expectedRule->items() as $key => $value) {
                 if (is_array($rule->$key)) {
                     $this->assertEquals($expectedRule->$key, $rule->$key);
                 } else {

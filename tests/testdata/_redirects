@@ -51,3 +51,9 @@
 
 # Redirect users with chinese language preference from /china to /china/zh-cn
 /china/*  /china/zh-cn/:splat  302  Language=zh
+
+# Placeholders
+/news/:year/:month/:date/:slug  /blog/:year/:month/:date/:slug
+
+# Custom named parameter
+/   /hello  Role=editor

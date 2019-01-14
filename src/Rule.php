@@ -2,68 +2,100 @@
 
 namespace Frozzare\Redirects;
 
-class Rule
+use Countable;
+
+class Rule implements Countable
 {
     /**
-     * Country value.
+     * All of the configuration items.
      *
      * @var array
      */
-    public $country = [];
+    protected $items = [
+        'country'  => [],
+        'force'    => false,
+        'from'     => '',
+        'language' => [],
+        'params'   => [],
+        'status'   => 301,
+        'to'       => '',
+    ];
 
     /**
-     * Force value.
+     * Create a new rule.
      *
-     * @var bool
+     * @param  array  $items
      */
-    public $force = false;
-
-    /**
-     * From value.
-     *
-     * @var string
-     */
-    public $from = '';
-
-    /**
-     * Language value.
-     *
-     * @var array
-     */
-    public $language = [];
-
-    /**
-     * Params value.
-     *
-     * @var array
-     */
-    public $params = [];
-
-    /**
-     * Status vlaue.
-     *
-     * @var int
-     */
-    public $status = 301;
-
-    /**
-     * To value.
-     *
-     * @var string
-     */
-    public $to = '';
-
-    /**
-     * Rule constructor.
-     *
-     * @param array $fields
-     */
-    public function __construct($fields = [])
+    public function __construct(array $items = [])
     {
-        foreach ($fields as $key => $value) {
-            if (isset($this->$key)) {
-                $this->$key = $value;
-            }
-        }
+        $this->items = array_merge($this->items, $items);
     }
+
+    /**
+     * Count rule values.
+     *
+     * @return int
+     */
+    public function count()
+    {
+        return count($this->items);
+    }
+
+    /**
+     * Get rule items.
+     *
+     * @return array
+     */
+    public function items()
+    {
+        return $this->items;
+    }
+
+    /**
+    * Get a rule value.
+    *
+    * @param  string $key
+    *
+    * @return mixed
+    */
+   public function &__get($key)
+   {
+       return $this->items[$key];
+   }
+
+   /**
+    * Determine if the given rule value exists.
+    *
+    * @param  string $key
+    *
+    * @return bool
+    */
+   public function __isset($key)
+   {
+       return isset($this->items[$key]);
+   }
+
+   /**
+    * Set a rule value.
+    *
+    * @param  string $key
+    *
+    * @param  mixed  $value
+    */
+   public function __set($key, $value)
+   {
+       $this->items[$key] = $value;
+   }
+
+   /**
+    * Unset a container value.
+    *
+    * @param  string $key
+    */
+   public function __unset($key)
+   {
+        if (isset($this->items[$key])) {
+            unset($this->items[$key]);
+        }
+   }
 }

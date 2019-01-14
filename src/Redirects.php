@@ -138,13 +138,14 @@ class Redirects
             $rule->to = $fields[0];
 
             // Set status and force values.
-            if (count($fields) > 1) {
+            if (count($fields) > 1 && is_numeric(str_replace('!', '', $fields[1]))) {
                 $status = $fields[1];
                 $rule->status = intval($status);
                 $rule->force = $status[strlen($status)-1] === '!';
+                $fields = array_splice($fields, count($fields) > 1 ? 2 : 1);
+            } else {
+                $fields = array_splice($fields, 1);
             }
-
-            $fields = array_splice($fields, count($fields) > 1 ? 2 : 1);
 
             // Parse language and country values.
             foreach ($fields as $field) {
@@ -155,10 +156,7 @@ class Redirects
                 }
 
                 $key = strtolower($parts[0]);
-
-                if (isset($rule->$key)) {
-                    $rule->$key = explode(',', $parts[1]);
-                }
+                $rule->$key = explode(',', $parts[1]);
             }
 
             $rules[] = $rule;
