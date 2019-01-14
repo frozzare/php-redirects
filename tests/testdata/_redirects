@@ -1,0 +1,53 @@
+# Implicit 301 redirects
+/home              /
+/blog/my-post.php  /blog/my-post
+/news              /blog
+/google            https://www.google.com
+
+# Redirect with a 301
+/home         /              301
+
+# Redirect with a 302
+/my-redirect  /              302
+
+# Rewrite a path
+/pass-through /index.html    200
+
+# Show a custom 404 for this path
+/ecommerce    /store-closed  404
+
+# Proxying
+/api/*  https://api.example.com/:splat  200
+
+# Single page app rewrite
+/*    /index.html   200
+
+# Forcing
+/app/*  /app/index.html  200!
+
+# Params
+/	foo=bar         /something  302
+/   foo=bar bar=baz	/something	302
+
+# Value params
+/store id=:id  /blog/:id  302
+/articles id=:id tag=:tag /posts/:tag/:id 301
+
+# base case
+/path/* /otherpath/:splat 301​
+
+# one value or the other.  Must match exactly!
+/path/* param1=:value1 /otherpath/:value1/:splat 301
+/path/* param2=:value2 /otherpath/:value2/:splat 301​
+
+# both values - ordering from the browser doesn't matter.
+/path/* param1=:value1 param2=:value2 /otherpath/:value1/:value2/:splat 301
+
+# Redirect users in China, Hongkong or Taiwan to /china.
+# there CANNOT be spaces in the last parameter: Country=x,y,z or Language=xx,yy
+/  /china   302  Country=cn,hk,tw
+# Redirect users in israel to /israel
+/  /israel  302  Country=il
+
+# Redirect users with chinese language preference from /china to /china/zh-cn
+/china/*  /china/zh-cn/:splat  302  Language=zh
