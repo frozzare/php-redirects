@@ -25,6 +25,9 @@ $redirects->rules();
 
 // match url against rule.
 $redirects->match($url);
+
+// get url to redirect to.
+$redirects->url($url);
 ```
 
 More examples in the [`tests/RedirectsTest.php`](tests/RedirectsTest.php)
