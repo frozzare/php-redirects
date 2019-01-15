@@ -237,7 +237,8 @@ class RedirectsTest extends TestCase
         }
     }
 
-    public function testUrl() {
+    public function testUrl()
+    {
         $r = (new Redirects)->parse("
             # Implicit 301 redirects
             /blog/my-post.php  /blog/my-post

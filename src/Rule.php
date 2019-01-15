@@ -58,10 +58,10 @@ class Rule implements Countable
     *
     * @return mixed
     */
-   public function &__get($key)
-   {
-       return $this->items[$key];
-   }
+    public function &__get($key)
+    {
+        return $this->items[$key];
+    }
 
    /**
     * Determine if the given rule value exists.
@@ -70,10 +70,10 @@ class Rule implements Countable
     *
     * @return bool
     */
-   public function __isset($key)
-   {
-       return isset($this->items[$key]);
-   }
+    public function __isset($key)
+    {
+        return isset($this->items[$key]);
+    }
 
    /**
     * Set a rule value.
@@ -82,20 +82,20 @@ class Rule implements Countable
     *
     * @param  mixed  $value
     */
-   public function __set($key, $value)
-   {
-       $this->items[$key] = $value;
-   }
+    public function __set($key, $value)
+    {
+        $this->items[$key] = $value;
+    }
 
    /**
     * Unset a container value.
     *
     * @param  string $key
     */
-   public function __unset($key)
-   {
+    public function __unset($key)
+    {
         if (isset($this->items[$key])) {
             unset($this->items[$key]);
         }
-   }
+    }
 }
