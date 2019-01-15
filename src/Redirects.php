@@ -2,6 +2,8 @@
 
 namespace Frozzare\Redirects;
 
+use Psr\Http\Message\RequestInterface;
+
 class Redirects
 {
     /**
@@ -32,15 +34,18 @@ class Redirects
     }
 
     /**
-     * Match url against redirect rule and
-     * replaces `:splat` with actual value if any.
+     * Match url against redirect rule.
      *
-     * @param  string $url
+     * @param  string|Psr\Http\Message\RequestInterface $url
      *
      * @return \Frozzare\Redirects\Rule|null
      */
     public function match($url)
     {
+        if ($url instanceof RequestInterface) {
+            $url = $url->getUri();
+        }
+
         foreach ($this->rules as $rule) {
             $from = str_replace('/', '\/', $rule->from);
             $reg = sprintf('/%s/', $from);
@@ -49,13 +54,39 @@ class Redirects
                 continue;
             }
 
-            $rule = clone $rule;
+            if (empty($rule->params)) {
+                return $rule;
+            }
 
-            if (strpos($rule->to, ':splat') !== false) {
-                $reg = sprintf('/%s\/(.*)/', $from);
-                if (preg_match($reg, $url, $matches)) {
-                    $rule->to = str_replace(':splat', $matches[1], $rule->to);
+            $params = array_keys($rule->params);
+            $parts = parse_url($url);
+
+            if (empty($parts['query'])) {
+                return;
+            }
+
+            $queries = explode('&', $parts['query']);
+            $found = 0;
+
+            // Match params against query params.
+            foreach ($queries as $query) {
+                if (strpos($query, '=') === false) {
+                    continue;
                 }
+
+                $parts = explode('=', $query);
+
+                if (empty($parts)) {
+                    continue;
+                }
+
+                if (in_array($parts[0], $params, true)) {
+                    $found++;
+                }
+            }
+
+            if (count($params) !== $found) {
+                return;
             }
 
             return $rule;
@@ -165,5 +196,83 @@ class Redirects
         $this->rules = $rules;
 
         return $this;
+    }
+
+    /**
+     * Get url to redirect to.
+     *
+     * @param  string|Psr\Http\Message\RequestInterface $url
+     *
+     * @return string|null
+     */
+    public function url($url)
+    {
+        if ($url instanceof RequestInterface) {
+            $url = $url->getUri();
+        }
+
+        $rule = $this->match($url);
+        if (empty($rule)) {
+            return;
+        }
+
+        $to = $rule->to;
+
+        // Replace params.
+        if (!empty($rule->params)) {
+            $parts = parse_url($url);
+
+            if (empty($parts['query'])) {
+                return;
+            }
+
+            $queries = explode('&', $parts['query']);
+            $params = [];
+
+            // Remove old query from url.
+            $url = str_replace('?' . $parts['query'], '', $url);
+
+            // Match params against query params.
+            foreach ($queries as $query) {
+                if (strpos($query, '=') === false) {
+                    continue;
+                }
+
+                $parts = explode('=', $query);
+
+                if (empty($parts)) {
+                    continue;
+                }
+
+                if (!isset($rule->params[$parts[0]])) {
+                    continue;
+                }
+
+                $key = $rule->params[$parts[0]];
+
+                if (count($parts) === 1) {
+                    $params[$key] = true;
+                } else {
+                    $params[$key] = $parts[1];
+                }
+            }
+
+            foreach ($params as $key => $value) {
+                $reg = sprintf('/%s/', str_replace(':', '\:', $key));
+                $to = preg_replace($reg, $value, $to);
+            }
+        }
+
+        $from = str_replace('/', '\/', $rule->from);
+
+        // Replace `:splat`
+        if (strpos($to, ':splat') !== false) {
+            $reg = sprintf('/%s\/(.*)/', $from);
+            if (preg_match($reg, $url, $matches)) {
+                $to = str_replace(':splat', $matches[1], $to);
+            }
+        }
+
+        return $to;
     }
 }

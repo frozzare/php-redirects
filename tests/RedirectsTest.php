@@ -2,6 +2,7 @@
 
 use Frozzare\Redirects\Redirects;
 use Frozzare\Redirects\Rule;
+use GuzzleHttp\Psr7\Request;
 use PHPUnit\Framework\TestCase;
 
 class RedirectsTest extends TestCase
@@ -14,29 +15,61 @@ class RedirectsTest extends TestCase
 
     public function testMatch()
     {
-        $r = new Redirects(__DIR__ . '/testdata/_redirects');
+        $r = (new Redirects)->parse("
+            # Implicit 301 redirects
+            /blog/my-post.php  /blog/my-post
+
+            # Proxying
+            /api/*  https://api.example.com/:splat  200
+
+            # one value or the other.  Must match exactly!
+            /path/* param1=:value1 /otherpath/:value1/:splat 301
+        ");
 
         $tests = [
             'https://example.com/api/hej' => new Rule([
                 'from' => '/api/*',
-                'to' => 'https://api.example.com/hej',
+                'to' => 'https://api.example.com/:splat',
                 'status' => 200,
             ]),
             'https://example.com/api/9202+ahe?foo=bar' => new Rule([
                 'from' => '/api/*',
-                'to' => 'https://api.example.com/9202+ahe?foo=bar',
+                'to' => 'https://api.example.com/:splat',
                 'status' => 200,
             ]),
             '/blog/my-post.php' => new Rule([
                 'from' => '/blog/my-post.php',
                 'to' => '/blog/my-post'
             ]),
+            '/path/foo?param1=bar' => new Rule([
+                'from' => '/path/*',
+                'to' => '/otherpath/:value1/:splat',
+                'params' => [
+                    'param1' => ':value1',
+                ],
+            ]),
+            '/path/foo?param1=' => new Rule([
+                'from' => '/path/*',
+                'to' => '/otherpath/:value1/:splat',
+                'params' => [
+                    'param1' => ':value1',
+                ],
+            ]),
+            '/path/foo?param1' => null,
+            '/path/foo' => null,
         ];
 
         foreach ($tests as $url => $expectedRule) {
             $rule = $r->match($url);
             $this->assertEquals($expectedRule, $rule);
         }
+
+        $rule = $r->match(new Request('GET', 'https://example.com/api/hej'));
+        $this->assertEquals($rule, new Rule([
+            'from' => '/api/*',
+            'to' => 'https://api.example.com/:splat',
+            'status' => 200,
+        ]));
     }
 
     public function testParser()
@@ -200,14 +233,38 @@ class RedirectsTest extends TestCase
 
         foreach ($expected as $index => $expectedRule) {
             $rule = $rules[$index];
-
-            foreach ($expectedRule->items() as $key => $value) {
-                if (is_array($rule->$key)) {
-                    $this->assertEquals($expectedRule->$key, $rule->$key);
-                } else {
-                    $this->assertSame($expectedRule->$key, $rule->$key);
-                }
-            }
+            $this->assertEquals($expectedRule, $rule);
         }
+    }
+
+    public function testUrl() {
+        $r = (new Redirects)->parse("
+            # Implicit 301 redirects
+            /blog/my-post.php  /blog/my-post
+
+            # Proxying
+            /api/*  https://api.example.com/:splat  200
+
+            # one value or the other.  Must match exactly!
+            /path/* param1=:value1 /otherpath/:value1/:splat 301
+        ");
+
+        $tests = [
+            'https://example.com/api/hej' => 'https://api.example.com/hej',
+            'https://example.com/api/9202+ahe?foo=bar' => 'https://api.example.com/9202+ahe?foo=bar',
+            '/blog/my-post.php' => '/blog/my-post',
+            '/path/foo?param1=bar' => '/otherpath/bar/foo',
+            '/path/foo?param1=' => '/otherpath//foo',
+            '/path/foo?param1' => null,
+            '/path/foo?param1=bar&bar=foo' => '/otherpath/bar/foo',
+            '/path/foo' => null,
+        ];
+
+        foreach ($tests as $input => $expected) {
+            $this->assertSame($expected, $r->url($input));
+        }
+
+        $url = $r->url(new Request('GET', 'https://example.com/api/hej'));
+        $this->assertSame('https://api.example.com/hej', $url);
     }
 }
