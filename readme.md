@@ -2,8 +2,6 @@
 
 [![Build Status](https://travis-ci.org/frozzare/php-redirects.svg?branch=master)](https://travis-ci.org/frozzare/php-redirects)
 
-> Work in progress!
-
 Parse Netlify's _redirects file [format](https://www.netlify.com/docs/redirects/).
 
 ## Installation
